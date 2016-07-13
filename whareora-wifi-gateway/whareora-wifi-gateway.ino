@@ -19,18 +19,11 @@
  *******************************
  *
  * REVISION HISTORY
- * Version 1.0 - Henrik EKblad
- * Contribution by a-lurker and Anticimex, 
- * Contribution by Norbert Truchsess <norbert.truchsess@t-online.de>
- * Contribution by Ivo Pullens (ESP8266 support)
+ * Version 1.0 - Henrik Ekblad
  * 
  * DESCRIPTION
- * The EthernetGateway sends data received from sensors to the WiFi link. 
- * The gateway also accepts input on ethernet interface, which is then sent out to the radio network.
- *
- * VERA CONFIGURATION:
- * Enter "ip-number:port" in the ip-field of the Arduino GW device. This will temporarily override any serial configuration for the Vera plugin. 
- * E.g. If you want to use the defualt values in this sketch enter: 192.168.178.66:5003
+ * The ESP8266 MQTT gateway sends radio network (or locally attached sensors) data to your MQTT broker.
+ * The node also listens to MY_MQTT_TOPIC_PREFIX and sends out those messages to the radio network
  *
  * LED purposes:
  * - To use the feature, uncomment WITH_LEDS_BLINKING in MyConfig.h
@@ -38,8 +31,7 @@
  * - TX (yellow) - blink fast on radio message transmitted. In inclusion mode will blink slowly
  * - ERR (red) - fast blink on error during transmission error or recieve crc error  
  * 
- * See http://www.mysensors.org/build/ethernet_gateway for wiring instructions.
- * The ESP8266 however requires different wiring:
+ * See http://www.mysensors.org/build/esp8266_gateway for wiring instructions.
  * nRF24L01+  ESP8266
  * VCC        VCC
  * CE         GPIO4          
@@ -64,162 +56,89 @@
  *
  * Make sure to fill in your ssid and WiFi password below for ssid & pass.
  */
-#define NO_PORTB_PINCHANGES 
 
-#include <SPI.h>  
-
-#include <MySigningNone.h> 
-#include <MySigningAtsha204Soft.h>
-#include <MyTransportNRF24.h>
-#include <MyTransportRFM69.h>
 #include <EEPROM.h>
-#include <MyHwESP8266.h>
+#include <SPI.h>
+
+// Enable debug prints to serial monitor
+#define MY_DEBUG 
+
+// Use a bit lower baudrate for serial prints on ESP8266 than default in MyConfig.h
+#define MY_BAUD_RATE 9600
+
+// Enables and select radio type (if attached)
+#define MY_RADIO_NRF24
+//#define MY_RADIO_RFM69
+
+#define MY_GATEWAY_MQTT_CLIENT
+#define MY_GATEWAY_ESP8266
+
+// Set this nodes subscripe and publish topic prefix
+#define MY_MQTT_PUBLISH_TOPIC_PREFIX "whare/sensors"
+#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "whare/command"
+
+// Set MQTT client id
+#define MY_MQTT_CLIENT_ID "wharesensor"
+
+// Enable these if your MQTT broker requires username/password
+//#define MY_MQTT_USER "username"
+//#define MY_MQTT_PASSWORD "password"
+
+// Set WIFI SSID and password
+#define MY_ESP8266_SSID "ssid"
+#define MY_ESP8266_PASSWORD "secretpassword"
+
+// Set the hostname for the WiFi Client. This is the hostname
+// it will pass to the DHCP server if not static. 
+// #define MY_ESP8266_HOSTNAME "mqtt-sensor-gateway"
+
+// Enable MY_IP_ADDRESS here if you want a static ip address (no DHCP)
+//#define MY_IP_ADDRESS 192,168,178,87
+
+// If using static ip you need to define Gateway and Subnet address as well
+//#define MY_IP_GATEWAY_ADDRESS 192,168,178,1
+//#define MY_IP_SUBNET_ADDRESS 255,255,255,0
+
+
+// MQTT broker ip address.  
+#define MY_CONTROLLER_IP_ADDRESS 150, 242, 42, 42
+
+// The MQTT broker port to to open 
+#define MY_PORT 1883      
+
+ /*
+// Flash leds on rx/tx/err
+#define MY_LEDS_BLINKING_FEATURE
+// Set blinking period
+#define MY_DEFAULT_LED_BLINK_PERIOD 300
+
+// Enable inclusion mode
+#define MY_INCLUSION_MODE_FEATURE
+// Enable Inclusion mode button on gateway
+#define MY_INCLUSION_BUTTON_FEATURE
+// Set inclusion mode duration (in seconds)
+#define MY_INCLUSION_MODE_DURATION 60 
+// Digital pin used for inclusion mode button
+#define MY_INCLUSION_MODE_BUTTON_PIN  3 
+
+#define MY_DEFAULT_ERR_LED_PIN 16  // Error led pin
+#define MY_DEFAULT_RX_LED_PIN  16  // Receive led pin
+#define MY_DEFAULT_TX_LED_PIN  16  // the PCB, on board LED
+*/
+
 #include <ESP8266WiFi.h>
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
-
-#include <MyParserSerial.h>  
-#include <MySensor.h>  
-#include <stdarg.h>
-#include "GatewayUtil.h"
-
-#define WLAN_SSID       "ssid"
-#define WLAN_PASS       "passphrase"
-#define MQTT_SERVER "10.1.1.85"
-#define MQTT_PORT 1883
-#define MQTT_USERNAME ""
-#define MQTT_PASSWORD ""
-
-#define INCLUSION_MODE_TIME 1 // Number of minutes inclusion mode is enabled
-#define INCLUSION_MODE_PIN  5 // Digital pin used for inclusion mode button
-
-#define RADIO_CE_PIN        4   // radio chip enable
-#define RADIO_SPI_SS_PIN    15  // radio SPI serial select
-
-#ifdef WITH_LEDS_BLINKING
-#define RADIO_ERROR_LED_PIN 7  // Error led pin
-#define RADIO_RX_LED_PIN    8  // Receive led pin
-#define RADIO_TX_LED_PIN    9  // the PCB, on board LED
-#endif
-
-
-// NRFRF24L01 radio driver (set low transmit power by default) 
-MyTransportNRF24 transport(RADIO_CE_PIN, RADIO_SPI_SS_PIN, RF24_PA_LEVEL_GW);
-//MyTransportRFM69 transport;
-
-
-// Message signing driver (signer needed if MY_SIGNING_FEATURE is turned on in MyConfig.h)
-#ifdef MY_SIGNING_FEATURE
-MySigningNone signer;
-//MySigningAtsha204Soft signer;
-#endif
-
-// Hardware profile 
-MyHwESP8266 hw;
-
-// Construct MySensors library (signer needed if MY_SIGNING_FEATURE is turned on in MyConfig.h)
-// To use LEDs blinking, uncomment WITH_LEDS_BLINKING in MyConfig.h
-MySensor gw(transport, hw
-#ifdef MY_SIGNING_FEATURE
-    , signer
-#endif
-#ifdef WITH_LEDS_BLINKING
-  , RADIO_RX_LED_PIN, RADIO_TX_LED_PIN, RADIO_ERROR_LED_PIN
-#endif
-  );
-  
-
-#define IP_PORT 5003         // The port you want to open 
-#define MAX_SRV_CLIENTS 5    // how many clients should be able to telnet to this ESP8266
-
-static inputBuffer inputString[MAX_SRV_CLIENTS];
-
-//#define ARRAY_SIZE(x)  (sizeof(x)/sizeof(x[0]))
-
-
-
-WiFiClient client;
-
-Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD);
-Adafruit_MQTT_Publish mqtt_topic = Adafruit_MQTT_Publish(&mqtt, "mysensors/raw");
-
-/*************************** Sketch Code ************************************/
-
-// Bug workaround for Arduino 1.6.6, it seems to need a function declaration
-// for some reason (only affects ESP8266, likely an arduino-builder bug).
-void MQTT_connect();
-
-void output(const char *fmt, ... ) {
-  MQTT_connect();
-  char serialBuffer[MAX_SEND_LENGTH];
-  va_list args;
-  va_start (args, fmt );
-  vsnprintf_P(serialBuffer, MAX_SEND_LENGTH, fmt, args);
-  va_end (args);
-  Serial.print(serialBuffer);
-  mqtt_topic.publish(serialBuffer);
-}
-
-
-
-// Function to connect and reconnect as necessary to the MQTT server.
-// Should be called in the loop function and it will take care if connecting.
-void MQTT_connect() {
-  int8_t ret;
-
-  // Stop if already connected.
-  if (mqtt.connected()) {
-    return;
-  }
-
-  Serial.print("Connecting to MQTT... ");
-
-  uint8_t retries = 3;
-  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
-       mqtt.disconnect();
-       delay(5000);  // wait 5 seconds
-       retries--;
-       if (retries == 0) {
-         // basically die and wait for WDT to reset me
-         while (1);
-       }
-  }
-  Serial.println("MQTT Connected!");
-}
+#include <MySensors.h>
 
 void setup() { 
-  // Setup console
-  hw_init();
+}
 
-  Serial.println(); Serial.println();
-  Serial.println("ESP8266 MySensors RF to MQTT Gateway");
-  Serial.print("Connecting to ");   Serial.println(WLAN_SSID);
-
-  WiFi.begin(WLAN_SSID, WLAN_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
-
-  Serial.println("WiFi connected");
-  Serial.println("IP address: "); Serial.println(WiFi.localIP());
-
-
-  setupGateway(INCLUSION_MODE_PIN, INCLUSION_MODE_TIME, output);
-
-  // Initialize gateway at maximum PA level, channel 70 and callback for write operations 
-  gw.begin(incomingMessage, 0, true, 0);
-
+void presentation() {
+  // Present locally attached sensors here    
 }
 
 
 void loop() {
-  gw.process();  
-  checkButtonTriggeredInclusion();
-  checkInclusionFinished();
+  // Send locally attech sensors data here
 }
 
 
