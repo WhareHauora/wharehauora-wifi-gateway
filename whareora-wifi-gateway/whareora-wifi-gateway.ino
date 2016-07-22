@@ -49,18 +49,6 @@
 #define MY_ESP8266_SSID "ssid"
 #define MY_ESP8266_PASSWORD "secretpassword"
 
-// Set the hostname for the WiFi Client. This is the hostname
-// it will pass to the DHCP server if not static. 
-// #define MY_ESP8266_HOSTNAME "mqtt-sensor-gateway"
-
-// Enable MY_IP_ADDRESS here if you want a static ip address (no DHCP)
-//#define MY_IP_ADDRESS 192,168,178,87
-
-// If using static ip you need to define Gateway and Subnet address as well
-//#define MY_IP_GATEWAY_ADDRESS 192,168,178,1
-//#define MY_IP_SUBNET_ADDRESS 255,255,255,0
-
-
 // MQTT broker ip address.  (broker.wharesensors.co)
 #define MY_CONTROLLER_IP_ADDRESS 150, 242, 42, 42
 // The MQTT broker port to to open 
