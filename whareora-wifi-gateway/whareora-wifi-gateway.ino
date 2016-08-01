@@ -1,4 +1,3 @@
-
 #include <EEPROM.h>
 #include <SPI.h>
 #include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
