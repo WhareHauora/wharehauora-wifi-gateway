@@ -1,145 +1,74 @@
-/**
- * The MySensors Arduino library handles the wireless radio link and protocol
- * between your home built sensors/actuators and HA controller of choice.
- * The sensors forms a self healing radio network with optional repeaters. Each
- * repeater and gateway builds a routing tables in EEPROM which keeps track of the
- * network topology allowing messages to be routed to nodes.
- *
- * Created by Henrik Ekblad <henrik.ekblad@mysensors.org>
- * Copyright (C) 2013-2015 Sensnology AB
- * Full contributor list: https://github.com/mysensors/Arduino/graphs/contributors
- *
- * Documentation: http://www.mysensors.org
- * Support Forum: http://forum.mysensors.org
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- *******************************
- *
- * REVISION HISTORY
- * Version 1.0 - Henrik Ekblad
- * 
- * DESCRIPTION
- * The ESP8266 MQTT gateway sends radio network (or locally attached sensors) data to your MQTT broker.
- * The node also listens to MY_MQTT_TOPIC_PREFIX and sends out those messages to the radio network
- *
- * LED purposes:
- * - To use the feature, uncomment WITH_LEDS_BLINKING in MyConfig.h
- * - RX (green) - blink fast on radio message recieved. In inclusion mode will blink fast only on presentation recieved
- * - TX (yellow) - blink fast on radio message transmitted. In inclusion mode will blink slowly
- * - ERR (red) - fast blink on error during transmission error or recieve crc error  
- * 
- * See http://www.mysensors.org/build/esp8266_gateway for wiring instructions.
- * nRF24L01+  ESP8266
- * VCC        VCC
- * CE         GPIO4          
- * CSN/CS     GPIO15
- * SCK        GPIO14
- * MISO       GPIO12
- * MOSI       GPIO13
- *            
- * Not all ESP8266 modules have all pins available on their external interface.
- * This code has been tested on an ESP-12 module.
- * The ESP8266 requires a certain pin configuration to download code, and another one to run code:
- * - Connect REST (reset) via 10K pullup resistor to VCC, and via switch to GND ('reset switch')
- * - Connect GPIO15 via 10K pulldown resistor to GND
- * - Connect CH_PD via 10K resistor to VCC
- * - Connect GPIO2 via 10K resistor to VCC
- * - Connect GPIO0 via 10K resistor to VCC, and via switch to GND ('bootload switch')
- * 
-  * Inclusion mode button:
- * - Connect GPIO5 via switch to GND ('inclusion switch')
- * 
- * Hardware SHA204 signing is currently not supported!
- *
- * Make sure to fill in your ssid and WiFi password below for ssid & pass.
- */
 
 #include <EEPROM.h>
 #include <SPI.h>
-
-// Enable debug prints to serial monitor
-#define MY_DEBUG 
-
-// Use a bit lower baudrate for serial prints on ESP8266 than default in MyConfig.h
-#define MY_BAUD_RATE 9600
-
-// Enables and select radio type (if attached)
-#define MY_RADIO_NRF24
-//#define MY_RADIO_RFM69
-
-#define MY_GATEWAY_MQTT_CLIENT
-#define MY_GATEWAY_ESP8266
-
-// Set this nodes subscripe and publish topic prefix
-#define MY_MQTT_PUBLISH_TOPIC_PREFIX "whare/sensors"
-#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "whare/command"
-
-// Set MQTT client id
-#define MY_MQTT_CLIENT_ID "wharesensor"
-
-// Enable these if your MQTT broker requires username/password
-//#define MY_MQTT_USER "username"
-//#define MY_MQTT_PASSWORD "password"
-
-// Set WIFI SSID and password
-#define MY_ESP8266_SSID "ssid"
-#define MY_ESP8266_PASSWORD "secretpassword"
-
-// Set the hostname for the WiFi Client. This is the hostname
-// it will pass to the DHCP server if not static. 
-// #define MY_ESP8266_HOSTNAME "mqtt-sensor-gateway"
-
-// Enable MY_IP_ADDRESS here if you want a static ip address (no DHCP)
-//#define MY_IP_ADDRESS 192,168,178,87
-
-// If using static ip you need to define Gateway and Subnet address as well
-//#define MY_IP_GATEWAY_ADDRESS 192,168,178,1
-//#define MY_IP_SUBNET_ADDRESS 255,255,255,0
-
-
-// MQTT broker ip address.  
-#define MY_CONTROLLER_IP_ADDRESS 150, 242, 42, 42
-
-// The MQTT broker port to to open 
-#define MY_PORT 1883      
-
- /*
-// Flash leds on rx/tx/err
-#define MY_LEDS_BLINKING_FEATURE
-// Set blinking period
-#define MY_DEFAULT_LED_BLINK_PERIOD 300
-
-// Enable inclusion mode
-#define MY_INCLUSION_MODE_FEATURE
-// Enable Inclusion mode button on gateway
-#define MY_INCLUSION_BUTTON_FEATURE
-// Set inclusion mode duration (in seconds)
-#define MY_INCLUSION_MODE_DURATION 60 
-// Digital pin used for inclusion mode button
-#define MY_INCLUSION_MODE_BUTTON_PIN  3 
-
-#define MY_DEFAULT_ERR_LED_PIN 16  // Error led pin
-#define MY_DEFAULT_RX_LED_PIN  16  // Receive led pin
-#define MY_DEFAULT_TX_LED_PIN  16  // the PCB, on board LED
-*/
-
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 #include <ESP8266WiFi.h>
+#define AP_NAME "WhareSensor"
+
+const char* my_ssid = "";
+const char* my_pass = "";
+const char* my_server = "m12.cloudmqtt.com";
+
+char* mqtt_username = "";
+char* mqtt_password = "";
+
+#define MY_DEBUG 
+#define MY_BAUD_RATE 9600
+#define MY_RADIO_NRF24
+#define MY_GATEWAY_ESP8266
+#define MY_GATEWAY_MQTT_CLIENT
+#define MY_MQTT_CLIENT_ID "whare"
+#define MY_ESP8266_SSID my_ssid
+#define MY_ESP8266_PASSWORD my_pass
+#define MY_CONTROLLER_URL_ADDRESS my_server
+#define MY_MQTT_PUBLISH_TOPIC_PREFIX "/sensors"
+#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/actuators"
+#define MY_MQTT_USER mqtt_username
+#define MY_MQTT_PASSWORD mqtt_password
+//#define MY_PORT 11223 //not-ssl
+#define MY_PORT 21223 // SSL
+
 #include <MySensors.h>
+
+void saveConfigCallback() {
+  //TODO - save the username+pass
+}
+
+void before() {
+  WiFiManager wifiManager;
+  wifiManager.resetSettings();    //reset settings - for testing
+  wifiManager.setTimeout(5* 60);  // wait 30 seconds
+
+  WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
+  wifiManager.addParameter(&custom_text);
+  
+  WiFiManagerParameter whare_mqtt_username("mqtt_username", "your email", mqtt_username, 32);
+  WiFiManagerParameter whare_mqtt_password("mqtt_password", "whare hauora password", mqtt_password, 32);
+
+  wifiManager.addParameter(&whare_mqtt_username);
+  wifiManager.addParameter(&whare_mqtt_password);
+  
+  //set config save notify callback
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  if (!wifiManager.startConfigPortal(AP_NAME)) {
+    Serial.println("failed to connect and hit timeout");
+    delay(3000);
+    //reset and try again, or maybe put it to deep sleep
+    ESP.reset();
+    delay(5000);
+  }
+  strcpy(mqtt_username, whare_mqtt_username.getValue());
+  strcpy(mqtt_password, whare_mqtt_password.getValue());
+  Serial.print("mqtt_username is "); Serial.println(mqtt_username);
+  Serial.print("mqtt_password is "); Serial.println(mqtt_password);}
 
 void setup() { 
 }
 
 void presentation() {
-  // Present locally attached sensors here    
 }
-
 
 void loop() {
-  // Send locally attech sensors data here
 }
-
 
 
