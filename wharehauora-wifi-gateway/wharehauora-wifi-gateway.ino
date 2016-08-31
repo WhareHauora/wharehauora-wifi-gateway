@@ -35,7 +35,7 @@ void saveConfigCallback() {
 
 void before() {
   WiFiManager wifiManager;
-  wifiManager.resetSettings();    //reset settings - for testing
+//  wifiManager.resetSettings();    //reset settings - uncomment this when testing.
   wifiManager.setTimeout(5* 60);  // wait 30 seconds
 
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
