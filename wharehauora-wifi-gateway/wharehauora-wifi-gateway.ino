@@ -1,16 +1,3 @@
-#include <EEPROM.h>
-#include <SPI.h>
-#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
-#include <ESP8266WiFi.h>
-#define AP_NAME "WhareSensor"
-
-const char* my_ssid = "";
-const char* my_pass = "";
-const char* my_server = "m12.cloudmqtt.com";
-
-char* mqtt_username = "";
-char* mqtt_password = "";
-
 #define MY_DEBUG 
 #define MY_BAUD_RATE 9600
 #define MY_RADIO_NRF24
@@ -27,6 +14,18 @@ char* mqtt_password = "";
 //#define MY_PORT 11223 //not-ssl
 #define MY_PORT 21223 // SSL
 
+#include <EEPROM.h>
+#include <SPI.h>
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+#include <ESP8266WiFi.h>
+#define AP_NAME "WhareSensor"
+
+const char* my_ssid = "";
+const char* my_pass = "";
+const char* my_server = "m12.cloudmqtt.com";
+
+char* mqtt_username = "";
+char* mqtt_password = "";
 #include <MySensors.h>
 
 void saveConfigCallback() {
@@ -35,7 +34,7 @@ void saveConfigCallback() {
 
 void before() {
   WiFiManager wifiManager;
-  wifiManager.resetSettings();    //reset settings - for testing
+//  wifiManager.resetSettings();    //reset settings - uncomment this when testing.
   wifiManager.setTimeout(5* 60);  // wait 30 seconds
 
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
