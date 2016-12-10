@@ -1,4 +1,19 @@
-#define MY_DEBUG 
+#include <EEPROM.h>
+#include <SPI.h>
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+#include <ESP8266WiFi.h>
+#define AP_NAME "WhareSensor"
+
+const char* my_ssid = "";
+const char* my_pass = "";
+const char* my_server = "m12.cloudmqtt.com";
+
+char* mqtt_username = "";
+char* mqtt_password = "";
+
+#define MY_RF24_CS_PIN 2
+
+#define MY_DEBUG
 #define MY_BAUD_RATE 9600
 #define MY_RADIO_NRF24
 #define MY_GATEWAY_ESP8266
@@ -14,18 +29,6 @@
 //#define MY_PORT 11223 //not-ssl
 #define MY_PORT 21223 // SSL
 
-#include <EEPROM.h>
-#include <SPI.h>
-#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
-#include <ESP8266WiFi.h>
-#define AP_NAME "WhareSensor"
-
-const char* my_ssid = "";
-const char* my_pass = "";
-const char* my_server = "m12.cloudmqtt.com";
-
-char* mqtt_username = "";
-char* mqtt_password = "";
 #include <MySensors.h>
 
 void saveConfigCallback() {
@@ -39,13 +42,13 @@ void before() {
 
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
   wifiManager.addParameter(&custom_text);
-  
+
   WiFiManagerParameter whare_mqtt_username("mqtt_username", "your email", mqtt_username, 32);
   WiFiManagerParameter whare_mqtt_password("mqtt_password", "whare hauora password", mqtt_password, 32);
 
   wifiManager.addParameter(&whare_mqtt_username);
   wifiManager.addParameter(&whare_mqtt_password);
-  
+
   //set config save notify callback
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   if (!wifiManager.startConfigPortal(AP_NAME)) {
@@ -60,7 +63,7 @@ void before() {
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
   Serial.print("mqtt_password is "); Serial.println(mqtt_password);}
 
-void setup() { 
+void setup() {
 }
 
 void presentation() {
