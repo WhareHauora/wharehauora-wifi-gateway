@@ -13,7 +13,7 @@ char* mqtt_password = "";
 
 #define MY_RF24_CS_PIN 2
 
-#define MY_DEBUG 
+#define MY_DEBUG
 #define MY_BAUD_RATE 9600
 #define MY_RADIO_NRF24
 #define MY_GATEWAY_ESP8266
@@ -37,18 +37,18 @@ void saveConfigCallback() {
 
 void before() {
   WiFiManager wifiManager;
-  wifiManager.resetSettings();    //reset settings - for testing
+//  wifiManager.resetSettings();    //reset settings - uncomment this when testing.
   wifiManager.setTimeout(5* 60);  // wait 30 seconds
 
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
   wifiManager.addParameter(&custom_text);
-  
+
   WiFiManagerParameter whare_mqtt_username("mqtt_username", "your email", mqtt_username, 32);
   WiFiManagerParameter whare_mqtt_password("mqtt_password", "whare hauora password", mqtt_password, 32);
 
   wifiManager.addParameter(&whare_mqtt_username);
   wifiManager.addParameter(&whare_mqtt_password);
-  
+
   //set config save notify callback
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   if (!wifiManager.startConfigPortal(AP_NAME)) {
@@ -63,7 +63,7 @@ void before() {
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
   Serial.print("mqtt_password is "); Serial.println(mqtt_password);}
 
-void setup() { 
+void setup() {
 }
 
 void presentation() {
