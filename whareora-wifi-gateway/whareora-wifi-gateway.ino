@@ -11,6 +11,8 @@ const char* my_server = "m12.cloudmqtt.com";
 char* mqtt_username = "";
 char* mqtt_password = "";
 
+#define MY_RF24_CS_PIN 2
+
 #define MY_DEBUG 
 #define MY_BAUD_RATE 9600
 #define MY_RADIO_NRF24
