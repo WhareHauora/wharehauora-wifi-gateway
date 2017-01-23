@@ -58,10 +58,10 @@ void before() {
     ESP.reset();
     delay(5000);
   }
-  strcpy(mqtt_username, whare_mqtt_username.getValue());
-  strcpy(mqtt_password, whare_mqtt_password.getValue());
-  Serial.print("mqtt_username is "); Serial.println(mqtt_username);
-  Serial.print("mqtt_password is "); Serial.println(mqtt_password);}
+
+  Serial.print("mqtt_username is "); Serial.println(whare_mqtt_username.getValue());
+  Serial.print("mqtt_password is "); Serial.println(whare_mqtt_password.getValue());
+}
 
 void setup() {
 }
