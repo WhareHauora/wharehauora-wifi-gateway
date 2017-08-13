@@ -1,4 +1,6 @@
-# whareora-gateway
+# wharehauora-gateway
+
+[![Stories in Ready](https://badge.waffle.io/WhareHauora/wharehauora-wifi-gateway.png?label=ready&title=Ready)](http://waffle.io/WhareHauora/wharehauora-wifi-gateway)
 
 
 New Zealand's housing is cold, damp, mouldy. Lack of heating and insulation means that homes are ill-equipped to deal with winter temperatures. These poor conditions are linked to increased illnesses and infection. Our homes are making us sick. 
