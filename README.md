@@ -14,4 +14,3 @@ For a subset of the deployments, they must work:
 * without internet 
 * without power supply 
 
-This is an arduino UNO sheild. It runs on 5V from micro USB (using 2nd hand phone chargers). It can be built in 10 minutes. It currently costs about NZ$20 per unit. 
