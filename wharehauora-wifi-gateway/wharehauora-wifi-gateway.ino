@@ -10,7 +10,7 @@ const char my_server[] = "m11.cloudmqtt.com";
 
 char mqtt_username[32];
 char mqtt_password[32];
-char *index = *mqtt_username;
+char *username_index = mqtt_username;
 char *start_of_user_topic = NULL;
     
 #define MY_RF24_CS_PIN 2
@@ -99,15 +99,15 @@ void before() {
 
   // pull number out of username, and use it for the mqtt topic.
 
-  while (index != NULL && *index != '\0') {
-    if((int)*index >= ZERO && (int)*index <= NINE ){
+  while (username_index != NULL && *username_index != '\0') {
+    if((int)*username_index >= ZERO && (int)*username_index <= NINE ){
       if(start_of_user_topic == NULL){
-        start_of_user_topic = index;
+        start_of_user_topic = username_index;
       }
     } else {
       start_of_user_topic = NULL;
     }
-    ++index;
+    ++username_index;
   }
 
   if(start_of_user_topic != NULL) {
