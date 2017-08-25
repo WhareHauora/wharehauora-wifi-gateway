@@ -10,7 +10,9 @@ const char my_server[] = "m11.cloudmqtt.com";
 
 char mqtt_username[32];
 char mqtt_password[32];
-
+char *index = *mqtt_username;
+char *start_of_user_topic = NULL;
+    
 #define MY_RF24_CS_PIN 2
 
 #define MY_DEBUG
@@ -23,12 +25,20 @@ char mqtt_password[32];
 #define MY_ESP8266_SSID my_ssid
 #define MY_ESP8266_PASSWORD my_pass
 #define MY_CONTROLLER_URL_ADDRESS my_server
-#define MY_MQTT_PUBLISH_TOPIC_PREFIX "/sensors/wharehauora/5"
-#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/sensors/wharehauora/5"
+// #define MY_MQTT_PUBLISH_TOPIC_PREFIX "/sensors/wharehauora/5"
+// #define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/sensors/wharehauora/5"
+
+#define MY_MQTT_PUBLISH_TOPIC_PREFIX "/sensors/wharehauora/"
+#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/sensors/wharehauora/"
+
 #define MY_MQTT_USER mqtt_username
 #define MY_MQTT_PASSWORD mqtt_password
 #define MY_PORT 16259 //not-ssl
 //#define MY_PORT 26259 /// SSL
+
+#define ZERO 48
+#define NINE 57
+
 
 #include <MySensors.h>
 
@@ -82,11 +92,30 @@ void before() {
   Serial.print("whare_mqtt_username is "); Serial.println(whare_mqtt_username.getValue());
   Serial.print("whare_mqtt_password is "); Serial.println(whare_mqtt_password.getValue());
 
-
   strcpy(mqtt_username, whare_mqtt_username.getValue());
   strcpy(mqtt_password, whare_mqtt_password.getValue());
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
   Serial.print("mqtt_password is "); Serial.println(mqtt_password);
+
+  // pull number out of username, and use it for the mqtt topic.
+
+  while (index != NULL && *index != '\0') {
+    if((int)*index >= ZERO && (int)*index <= NINE ){
+      if(start_of_user_topic == NULL){
+        start_of_user_topic = index;
+      }
+    } else {
+      start_of_user_topic = NULL;
+    }
+    ++index;
+  }
+
+  if(start_of_user_topic != NULL) {
+    Serial.print("mqtt_user_topic is "); Serial.println(start_of_user_topic);
+  }else{
+    Serial.print("no MQTT Topic found");
+  }
+
 }
 
 void setup() {
