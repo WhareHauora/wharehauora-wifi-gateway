@@ -14,8 +14,12 @@ char mqtt_password[32];
 /* Veriable for setting up the publish topic  */
 #define ZERO 48
 #define NINE 57
+#define WHARE_USERNAME_POSITION 0
+#define WHARE_PASSWORD_POSITION 32
+
 char mqtt_publish_topic[32];
-  
+
+
 #define MY_RF24_CS_PIN 2
 
 #define MY_DEBUG
@@ -57,12 +61,34 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 }
 
 void before() {
+  WiFiManager wifiManager;
   char *username_index = mqtt_username;
   char *start_of_user_topic = NULL;
 
+
+/*
+ * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
+ * how do we know if they are stored there?
+ * how to we reset them if they are wrong but the user has got the other stuff correct?
+ */
+
+  // Retrieving a state (from local EEPROM).
+
+  // uint8_t loadState(uint8_t pos);
+  // pos - The position to fetch from EEPROM (0-255)
+
+  for(int i = 0; i < 32; i++){
+    mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
+  }
+
+  for(int i = 0; i < 32; i++){
+    mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
+  }
+
+  
+
   Serial.println("Entering config mode");
 
-  WiFiManager wifiManager;
   //  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
   wifiManager.setTimeout(5* 60);  // wait 30 seconds
 
@@ -98,6 +124,26 @@ void before() {
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
   Serial.print("mqtt_password is "); Serial.println(mqtt_password);
 
+/*
+ * Here is where we save the whare_mqtt_username and whare_mqtt_password
+ * but we won't save the mqtt_publish_topic since its IN the username
+ * lets just parse it out each time
+ */
+ 
+  // You can save a state (in local EEPROM) which is good for actuators to "remember" state between power cycles. You have 256 bytes to play with. Note that there is a limitation on the number of writes the EEPROM can handle (~100 000 cycles).
+
+  // void saveState(uint8_t pos, uint8_t value);
+  // pos - The position to store value in (0-255)
+  // value - Value to store in position
+
+  for(int i = 0; i < 32; i++){
+    saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
+  }
+
+  for(int i = 0; i < 32; i++){
+    saveState(i + WHARE_PASSWORD_POSITION, mqtt_password[i]);
+  }
+  
   // pull number out of username, and use it for the mqtt topic.
 
   while (username_index != NULL && *username_index != '\0') {
