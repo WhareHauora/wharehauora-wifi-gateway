@@ -46,6 +46,39 @@ char mqtt_publish_topic[32];
 
 bool shouldSaveConfig = false;
 
+// save custom parameters that wifimanager collects
+void saveCustomParameters(){
+   // You can save a state (in local EEPROM) which is good for actuators to "remember" state between power cycles. You have 256 bytes to play with. Note that there is a limitation on the number of writes the EEPROM can handle (~100 000 cycles).
+
+  // void saveState(uint8_t pos, uint8_t value);
+  // pos - The position to store value in (0-255)
+  // value - Value to store in position
+
+  for(int i = 0; i < 32; i++){
+    saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
+  }
+
+  for(int i = 0; i < 32; i++){
+    saveState(i + WHARE_PASSWORD_POSITION, mqtt_password[i]);
+  }
+}
+
+void loadCustomParameters(){
+  // Retrieving a state (from local EEPROM).
+
+  // uint8_t loadState(uint8_t pos);
+  // pos - The position to fetch from EEPROM (0-255)
+
+  for(int i = 0; i < 32; i++){
+    mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
+  }
+
+  for(int i = 0; i < 32; i++){
+    mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
+  }
+}
+
+
 //callback notifying us of the need to save config
 void saveConfigCallback () {
   Serial.println("Should save config");
@@ -65,7 +98,6 @@ void before() {
   char *username_index = mqtt_username;
   char *start_of_user_topic = NULL;
 
-
 /*
  * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
  * how do we know if they are stored there?
@@ -73,20 +105,7 @@ void before() {
  * where does WiFiManager store the data it collects about the ssid etc...? Are we overwriting it? I need to read the wifimanager source code
  */
 
-  // Retrieving a state (from local EEPROM).
-
-  // uint8_t loadState(uint8_t pos);
-  // pos - The position to fetch from EEPROM (0-255)
-
-  for(int i = 0; i < 32; i++){
-    mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
-  }
-
-  for(int i = 0; i < 32; i++){
-    mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
-  }
-
-  
+  loadCustomParameters();
 
   Serial.println("Entering config mode");
 
@@ -131,19 +150,7 @@ void before() {
  * lets just parse it out each time
  */
  
-  // You can save a state (in local EEPROM) which is good for actuators to "remember" state between power cycles. You have 256 bytes to play with. Note that there is a limitation on the number of writes the EEPROM can handle (~100 000 cycles).
-
-  // void saveState(uint8_t pos, uint8_t value);
-  // pos - The position to store value in (0-255)
-  // value - Value to store in position
-
-  for(int i = 0; i < 32; i++){
-    saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
-  }
-
-  for(int i = 0; i < 32; i++){
-    saveState(i + WHARE_PASSWORD_POSITION, mqtt_password[i]);
-  }
+  saveCustomParameters();
   
   // pull number out of username, and use it for the mqtt topic.
 
