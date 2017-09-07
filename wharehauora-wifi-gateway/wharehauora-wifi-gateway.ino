@@ -70,6 +70,7 @@ void before() {
  * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
  * how do we know if they are stored there?
  * how to we reset them if they are wrong but the user has got the other stuff correct?
+ * where does WiFiManager store the data it collects about the ssid etc...? Are we overwriting it? I need to read the wifimanager source code
  */
 
   // Retrieving a state (from local EEPROM).
