@@ -14,8 +14,10 @@ char mqtt_password[32];
 /* Veriable for setting up the publish topic  */
 #define ZERO 48
 #define NINE 57
-#define WHARE_USERNAME_POSITION 0
-#define WHARE_PASSWORD_POSITION 32
+/* these two define the position in EEPROM where the bytes are stored, and the 32 below related to the 32 in the mqtt_username and mqtt_password definitions */
+#define WHARE_USERNAME_POSITION 1
+#define WHARE_PASSWORD_POSITION 33
+#define WHARE_CREDENTIALS_POSITION 0
 
 char mqtt_publish_topic[32];
 
@@ -46,14 +48,8 @@ char mqtt_publish_topic[32];
 
 bool shouldSaveConfig = false;
 
-// save custom parameters that wifimanager collects
+// save custom parameters that wifimanager collects to EEPROM
 void saveCustomParameters(){
-   // You can save a state (in local EEPROM) which is good for actuators to "remember" state between power cycles. You have 256 bytes to play with. Note that there is a limitation on the number of writes the EEPROM can handle (~100 000 cycles).
-
-  // void saveState(uint8_t pos, uint8_t value);
-  // pos - The position to store value in (0-255)
-  // value - Value to store in position
-
   for(int i = 0; i < 32; i++){
     saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
   }
@@ -63,12 +59,19 @@ void saveCustomParameters(){
   }
 }
 
+/*
+ * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
+ *
+ * How do I know that what I am reading is gobbledygook or
+ * legitimate data?
+ * Does it even matter?
+ * 
+ * how to we reset them if they are wrong but the user has got the other stuff correct?
+ */
+
 void loadCustomParameters(){
-  // Retrieving a state (from local EEPROM).
-
-  // uint8_t loadState(uint8_t pos);
-  // pos - The position to fetch from EEPROM (0-255)
-
+  Serial.println("loading custom parameters");
+  
   for(int i = 0; i < 32; i++){
     mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
   }
@@ -76,6 +79,9 @@ void loadCustomParameters(){
   for(int i = 0; i < 32; i++){
     mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
   }
+
+  Serial.println(mqtt_username);
+  Serial.println(mqtt_password);
 }
 
 
@@ -97,13 +103,6 @@ void before() {
   WiFiManager wifiManager;
   char *username_index = mqtt_username;
   char *start_of_user_topic = NULL;
-
-/*
- * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
- * how do we know if they are stored there?
- * how to we reset them if they are wrong but the user has got the other stuff correct?
- * where does WiFiManager store the data it collects about the ssid etc...? Are we overwriting it? I need to read the wifimanager source code
- */
 
   loadCustomParameters();
 
@@ -135,10 +134,7 @@ void before() {
     ESP.reset();
     delay(5000);
   }
-
-  Serial.print("whare_mqtt_username is "); Serial.println(whare_mqtt_username.getValue());
-  Serial.print("whare_mqtt_password is "); Serial.println(whare_mqtt_password.getValue());
-
+  
   strcpy(mqtt_username, whare_mqtt_username.getValue());
   strcpy(mqtt_password, whare_mqtt_password.getValue());
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
@@ -149,9 +145,10 @@ void before() {
  * but we won't save the mqtt_publish_topic since its IN the username
  * lets just parse it out each time
  */
- 
-  saveCustomParameters();
-  
+   if (shouldSaveConfig) {
+    saveCustomParameters();
+   }
+   
   // pull number out of username, and use it for the mqtt topic.
 
   while (username_index != NULL && *username_index != '\0') {
