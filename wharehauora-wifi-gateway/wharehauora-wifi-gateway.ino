@@ -19,7 +19,7 @@ const char my_pass[] = "";
 #else
   // Production MQTT server
   const char my_server[] = "m12.cloudmqtt.com";
-   #define MY_PORT 14876 //not-ssl
+  #define MY_PORT 14876 //not-ssl
 #endif
 
 char mqtt_username[32];
