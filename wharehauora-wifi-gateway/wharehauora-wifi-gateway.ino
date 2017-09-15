@@ -56,7 +56,9 @@ char mqtt_publish_topic[32];
 
 bool shouldSaveConfig = false;
 
-// save custom parameters that wifimanager collects to EEPROM
+/**
+ * save custom parameters that wifimanager collects to EEPROM
+ */
 void saveCustomParameters(){
   for(int i = 0; i < 32; i++){
     saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
@@ -67,19 +69,18 @@ void saveCustomParameters(){
   }
 }
 
-/*
- * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eerpom
+/**
+ * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eeprom
  *
  * How do I know that what I am reading is gobbledygook or
  * legitimate data?
  * Does it even matter?
- * 
+ *
  * how to we reset them if they are wrong but the user has got the other stuff correct?
  */
-
 void loadCustomParameters(){
   Serial.println("loading custom parameters");
-  
+
   for(int i = 0; i < 32; i++){
     mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
   }
@@ -142,21 +143,21 @@ void before() {
     ESP.reset();
     delay(5000);
   }
-  
+
   strcpy(mqtt_username, whare_mqtt_username.getValue());
   strcpy(mqtt_password, whare_mqtt_password.getValue());
   Serial.print("mqtt_username is "); Serial.println(mqtt_username);
   Serial.print("mqtt_password is "); Serial.println(mqtt_password);
 
-/*
- * Here is where we save the whare_mqtt_username and whare_mqtt_password
- * but we won't save the mqtt_publish_topic since its IN the username
- * lets just parse it out each time
- */
+  /*
+   * Here is where we save the whare_mqtt_username and whare_mqtt_password
+   * but we won't save the mqtt_publish_topic since its IN the username
+   * lets just parse it out each time
+   */
    if (shouldSaveConfig) {
     saveCustomParameters();
    }
-   
+
   // pull number out of username, and use it for the mqtt topic.
 
   while (username_index != NULL && *username_index != '\0') {
@@ -172,7 +173,7 @@ void before() {
 
   if(start_of_user_topic != NULL) {
     Serial.print("mqtt_user_topic is "); Serial.println(start_of_user_topic);
-  }else{
+  } else {
     Serial.print("no MQTT Topic found");
   }
 
