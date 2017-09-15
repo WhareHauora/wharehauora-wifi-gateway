@@ -2,6 +2,10 @@
 #include <SPI.h>
 #include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 #include <ESP8266WiFi.h>
+
+// Turn this on to talk to the staging version instead
+//#define STAGING
+
 #define AP_NAME "WhareSensor"
 
 const char my_ssid[] = "";
