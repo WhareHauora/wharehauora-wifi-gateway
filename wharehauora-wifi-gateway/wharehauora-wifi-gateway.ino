@@ -119,8 +119,6 @@ void before() {
   char *username_index = mqtt_username;
   char *start_of_user_topic = NULL;
 
-  loadCustomParameters();
-
   Serial.println("Entering config mode");
 
   //  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
@@ -160,10 +158,16 @@ void before() {
    * but we won't save the mqtt_publish_topic since its IN the username
    * lets just parse it out each time
    */
-   if (shouldSaveConfig) {
+  if (shouldSaveConfig) {
     saveCustomParameters();
-   }
+  }
 
+  /*
+   * By the time we get here, either the configPortal didn't need to be shown this boot
+   * or this is the first boot and the configPortal was shown and configuration was successful
+   */
+  loadCustomParameters();
+  
   // pull number out of username, and use it for the mqtt topic.
 
   while (username_index != NULL && *username_index != '\0') {
@@ -177,14 +181,18 @@ void before() {
     ++username_index;
   }
 
+  strcpy(mqtt_publish_topic, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX);
+  
   if(start_of_user_topic != NULL) {
     Serial.print("mqtt_user_topic is "); Serial.println(start_of_user_topic);
+    strcat(mqtt_publish_topic, start_of_user_topic);
   } else {
-    Serial.print("no MQTT Topic found");
+    Serial.print("no MQTT Topic found\n");
+    /* Set the topic to NA not available */
+    strcat(mqtt_publish_topic, "NA");
   }
-
-  strcpy(mqtt_publish_topic, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX);
-  strcat(mqtt_publish_topic, start_of_user_topic);
+  
+  
 }
 
 void setup() {
