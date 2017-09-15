@@ -77,11 +77,10 @@ void saveCustomParameters(){
 /**
  * Here is where we attempt to retrieve the whare_mqtt_username and whare_mqtt_password from the eeprom
  *
- * How do I know that what I am reading is gobbledygook or
- * legitimate data?
+ * TODO:
+ * How do I know that what I am reading is gobbledygook or legitimate data?
  * Does it even matter?
- *
- * how to we reset them if they are wrong but the user has got the other stuff correct?
+ * How to we reset creds if they are wrong but the user has got the other stuff correct?
  */
 void loadCustomParameters(){
   Serial.println("loading custom parameters");
