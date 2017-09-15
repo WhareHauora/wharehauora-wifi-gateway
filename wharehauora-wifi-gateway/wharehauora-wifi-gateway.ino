@@ -25,9 +25,10 @@ const char my_pass[] = "";
 char mqtt_username[32];
 char mqtt_password[32];
 
-/* Variable for setting up the publish topic  */
+/* Start and end position in username string to read when setting up the publish topic  */
 #define ZERO 48
 #define NINE 57
+
 /* these two define the position in EEPROM where the bytes are stored, and the 32 below related to the 32 in the mqtt_username and mqtt_password definitions */
 #define WHARE_USERNAME_POSITION 1
 #define WHARE_PASSWORD_POSITION 33
