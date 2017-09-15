@@ -177,7 +177,8 @@ void before() {
     Serial.print("no MQTT Topic found");
   }
 
-  strcpy(mqtt_publish_topic, start_of_user_topic) ;
+  strcpy(mqtt_publish_topic, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX);
+  strcat(mqtt_publish_topic, start_of_user_topic);
 }
 
 void setup() {
