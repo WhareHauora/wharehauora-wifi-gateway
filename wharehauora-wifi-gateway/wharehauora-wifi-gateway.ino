@@ -26,8 +26,8 @@ char mqtt_username[32];
 char mqtt_password[32];
 
 /* Start and end position in username string to read when setting up the publish topic  */
-#define ZERO 48
-#define NINE 57
+#define START_POS 48
+#define END_POS 57
 
 /* these two define the position in EEPROM where the bytes are stored, and the 32 below related to the 32 in the mqtt_username and mqtt_password definitions */
 #define WHARE_USERNAME_POSITION 1
@@ -166,7 +166,7 @@ void before() {
   // pull number out of username, and use it for the mqtt topic.
 
   while (username_index != NULL && *username_index != '\0') {
-    if((int)*username_index >= ZERO && (int)*username_index <= NINE ){
+    if((int)*username_index >= START_POS && (int)*username_index <= END_POS ){
       if(start_of_user_topic == NULL){
         start_of_user_topic = username_index;
       }
