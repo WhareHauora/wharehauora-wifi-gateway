@@ -6,7 +6,17 @@
 
 const char my_ssid[] = "";
 const char my_pass[] = "";
-const char my_server[] = "m11.cloudmqtt.com";
+
+#ifdef STAGING
+  // Staging MQTT server
+  const char my_server[] = "m11.cloudmqtt.com";
+  #define MY_PORT 16259 //not-ssl
+  //#define MY_PORT 26259 /// SSL
+#else
+  // Production MQTT server
+  const char my_server[] = "m12.cloudmqtt.com";
+   #define MY_PORT 14876 //not-ssl
+#endif
 
 char mqtt_username[32];
 char mqtt_password[32];
@@ -40,8 +50,6 @@ char mqtt_publish_topic[32];
 
 #define MY_MQTT_USER mqtt_username
 #define MY_MQTT_PASSWORD mqtt_password
-#define MY_PORT 16259 //not-ssl
-//#define MY_PORT 26259 /// SSL
 
 
 #include <MySensors.h>
