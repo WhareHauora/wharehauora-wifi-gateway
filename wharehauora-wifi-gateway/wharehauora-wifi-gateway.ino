@@ -2,9 +2,11 @@
 #include <SPI.h>
 #include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 #include <ESP8266WiFi.h>
+#include <Ticker.h>
 
 // Turn this on to talk to the staging version instead
 //#define STAGING
+#define DEV
 
 #define AP_NAME "WhareSensor"
 
@@ -16,7 +18,15 @@ const char my_pass[] = "";
   const char my_server[] = "m11.cloudmqtt.com";
   #define MY_PORT 16259 //not-ssl
   //#define MY_PORT 26259 /// SSL
-#else
+#endif
+
+#ifdef DEV
+  // dev mqtt server
+  const char my_server[] = "192.168.1.174";
+  #define MY_PORT 1883 //not-ssl  
+#endif
+
+#ifdef PRODUCTION
   // Production MQTT server
   const char my_server[] = "m12.cloudmqtt.com";
   #define MY_PORT 14876 //not-ssl
@@ -60,6 +70,12 @@ char mqtt_publish_topic[32];
 #include <MySensors.h>
 
 bool shouldSaveConfig = false;
+bool shouldSendHeartbeat = false;
+Ticker heartBeat;
+
+void setSendHeartbeatFlag(){
+  shouldSendHeartbeat = true;
+}
 
 /**
  * save custom parameters that wifimanager collects to EEPROM
@@ -196,10 +212,17 @@ void before() {
 }
 
 void setup() {
+  // every 10 seconds, set a flag to true that a heartbeat should be sent
+  // we don't want to do network stuff in a timer just in case it takes for ages
+  heartBeat.attach(10,setSendHeartbeatFlag);
 }
 
 void presentation() {
 }
 
 void loop() {
+  if(shouldSendHeartbeat){
+    shouldSendHeartbeat = false;
+    sendHeartbeat();
+  }
 }
