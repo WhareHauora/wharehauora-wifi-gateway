@@ -5,6 +5,7 @@
 
 // Turn this on to talk to the staging version instead
 //#define STAGING
+#define DEV
 
 #define AP_NAME "WhareSensor"
 
@@ -16,7 +17,15 @@ const char my_pass[] = "";
   const char my_server[] = "m11.cloudmqtt.com";
   #define MY_PORT 16259 //not-ssl
   //#define MY_PORT 26259 /// SSL
-#else
+#endif
+
+#ifdef DEV
+  // dev mqtt server
+  const char my_server[] = "192.168.0.128";
+  #define MY_PORT 1883 //not-ssl  
+#endif
+
+#ifdef PRODUCTION
   // Production MQTT server
   const char my_server[] = "m12.cloudmqtt.com";
   #define MY_PORT 14876 //not-ssl
@@ -121,8 +130,8 @@ void before() {
 
   Serial.println("Entering config mode");
 
-  //  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
-  wifiManager.setTimeout(5* 60);  // wait 30 seconds
+  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
+  wifiManager.setConfigPortalTimeout(30);  // wait 30 seconds
 
 
   wifiManager.setAPCallback(configModeCallback);
@@ -132,6 +141,11 @@ void before() {
 
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
   wifiManager.addParameter(&custom_text);
+
+  WiFiManagerParameter custom_text_2("<p>moar something</p>");
+  wifiManager.addParameter(&custom_text_2);
+
+  wifiManager.setWifiSaveMessage("A CUSTOM SAVE MESSAGE");
 
   WiFiManagerParameter whare_mqtt_username("mqtt_username", "username", mqtt_username, 32);
   WiFiManagerParameter whare_mqtt_password("mqtt_password", "pass code", mqtt_password, 32);
@@ -164,7 +178,7 @@ void before() {
 
   /*
    * By the time we get here, either the configPortal didn't need to be shown this boot
-   * or this is the first boot and the configPortal was shown and configuration was successful
+   * or this is the first boot and the configPortal was shown and configuration was suc cessful
    */
   loadCustomParameters();
   
