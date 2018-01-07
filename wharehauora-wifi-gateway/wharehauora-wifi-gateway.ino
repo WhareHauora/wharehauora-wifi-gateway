@@ -4,7 +4,7 @@
 #include <ESP8266WiFi.h>
 #include <Ticker.h>
 
-#define FIRMWAREVERSION "VERSION GOES HERE"
+#define FIRMWAREVERSION "1"
 /************************************************************************/
 // What environment are we targeting? DEV, STAGING, or PROD?
 /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
