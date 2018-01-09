@@ -182,7 +182,7 @@ void before() {
   WiFiManagerParameter custom_text("<p>Whare Hauora login</p>");
   wifiManager.addParameter(&custom_text);
 
-  wifiManager.setWifiSaveMessage("A CUSTOM SAVE MESSAGE");
+  wifiManager.setWifiSaveMessage("<div>Credentials Saved<br />Trying to connect WhareHauora gateway to your network.<br />If it fails reconnect to AP to try again</div>");
 
   WiFiManagerParameter whare_mqtt_username("mqtt_username", "username", mqtt_username, 32);
   WiFiManagerParameter whare_mqtt_password("mqtt_password", "pass code", mqtt_password, 32);
