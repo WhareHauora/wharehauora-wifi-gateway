@@ -4,6 +4,7 @@
 #include <ESP8266WiFi.h>
 #include <Ticker.h>
 
+#define FIRMWAREVERSION "1"
 /************************************************************************/
 // What environment are we targeting? DEV, STAGING, or PROD?
 /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
@@ -145,8 +146,7 @@ void saveConfigCallback () {
 
 void configModeCallback (WiFiManager *myWiFiManager) {
   Serial.println("Entered config mode");
-  //Serial.println(WiFi.softAPIP());
-  Serial.println(WiFi.softAPIP().toString());
+  Serial.println(WiFi.softAPIP());
 
   Serial.println(myWiFiManager->getConfigPortalSSID());
 }
@@ -228,8 +228,6 @@ void before() {
     /* Set the topic to NA not available */
     strcat(mqtt_publish_topic, "NA");
   }
-
-
 }
 
 void setup() {
@@ -239,6 +237,9 @@ void setup() {
 }
 
 void presentation() {
+  Serial.println("Sending firmware version");
+
+  sendSketchInfo("Whare Hauora WiFi Gateway", FIRMWAREVERSION);
 }
 
 void loop() {
