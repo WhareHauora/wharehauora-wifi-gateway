@@ -92,19 +92,8 @@ int heartBeatFrequency = 10; // seconds
 Ticker heartBeat;
 /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
 
-void debugprintln(String thingToPrint){
-  #ifdef MY_DEBUG
-    Serial.println(thingToPrint);
-  #endif
-}
-void debugprint(String thingToPrint){
-  #ifdef MY_DEBUG
-    Serial.print(thingToPrint);
-  #endif
-}
-
 void setSendHeartbeatFlag(){
-  debugprintln("Setting shouldSendHeartbeat true");
+  Serial.println("Setting shouldSendHeartbeat true");
 
   shouldSendHeartbeat = true;
 }
@@ -131,7 +120,7 @@ void saveCustomParameters(){
  * How to we reset creds if they are wrong but the user has got the other stuff correct?
  */
 void loadCustomParameters(){
-  debugprintln("loading custom parameters");
+  Serial.println("loading custom parameters");
 
   for(int i = 0; i < 32; i++){
     mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
@@ -141,8 +130,8 @@ void loadCustomParameters(){
     mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
   }
 
-  debugprintln(mqtt_username);
-  debugprintln(mqtt_password);
+  Serial.println(mqtt_username);
+  Serial.println(mqtt_password);
 }
 
 
@@ -150,17 +139,16 @@ void loadCustomParameters(){
  * callback notifying us of the need to save config
  */
 void saveConfigCallback () {
-  debugprintln("Should save config");
+  Serial.println("Should save config");
   shouldSaveConfig = true;
 }
 
 
 void configModeCallback (WiFiManager *myWiFiManager) {
-  debugprintln("Entered config mode");
-  //Serial.println(WiFi.softAPIP());
-  debugprintln(WiFi.softAPIP().toString());
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
 
-  debugprintln(myWiFiManager->getConfigPortalSSID());
+  Serial.println(myWiFiManager->getConfigPortalSSID());
 }
 
 void before() {
@@ -168,7 +156,7 @@ void before() {
   char *username_index = mqtt_username;
   char *start_of_user_topic = NULL;
 
-  debugprintln("Entering config mode");
+  Serial.println("Entering config mode");
 
   //  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
   wifiManager.setTimeout(5* 60);  // wait 30 seconds
@@ -192,7 +180,7 @@ void before() {
 
 
   if (!wifiManager.startConfigPortal(AP_NAME)) {
-    debugprintln("failed to connect and hit timeout");
+    Serial.println("failed to connect and hit timeout");
     delay(3000);
     //reset and try again, or maybe put it to deep sleep
     ESP.reset();
@@ -201,8 +189,8 @@ void before() {
 
   strcpy(mqtt_username, whare_mqtt_username.getValue());
   strcpy(mqtt_password, whare_mqtt_password.getValue());
-  debugprint("mqtt_username is "); debugprintln(mqtt_username);
-  debugprint("mqtt_password is "); debugprintln(mqtt_password);
+  Serial.print("mqtt_username is "); Serial.println(mqtt_username);
+  Serial.print("mqtt_password is "); Serial.println(mqtt_password);
 
   /*
    * Here is where we save the whare_mqtt_username and whare_mqtt_password
@@ -235,15 +223,13 @@ void before() {
   strcpy(mqtt_publish_topic, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX);
 
   if(start_of_user_topic != NULL) {
-    debugprint("mqtt_user_topic is "); debugprintln(start_of_user_topic);
+    Serial.print("mqtt_user_topic is "); Serial.println(start_of_user_topic);
     strcat(mqtt_publish_topic, start_of_user_topic);
   } else {
-    debugprint("no MQTT Topic found\n");
+    Serial.print("no MQTT Topic found\n");
     /* Set the topic to NA not available */
     strcat(mqtt_publish_topic, "NA");
   }
-
-
 }
 
 void setup() {
@@ -253,7 +239,7 @@ void setup() {
 }
 
 void presentation() {
-  debugprintln("Sending firmware version");
+  Serial.println("Sending firmware version");
 
   sendSketchInfo("Whare Hauora WiFi Gateway", FIRMWAREVERSION);
 }
@@ -261,7 +247,7 @@ void presentation() {
 void loop() {
   if(shouldSendHeartbeat){
     shouldSendHeartbeat = false;
-    debugprintln("Sending heartbeat");
+    Serial.println("Sending heartbeat");
 
     sendHeartbeat();
   }
