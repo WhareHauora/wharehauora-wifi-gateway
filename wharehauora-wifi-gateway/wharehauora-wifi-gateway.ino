@@ -22,8 +22,8 @@
 
 #ifdef DEV
   // dev mqtt server
-  const char my_server[] = "192.168.0.128";
-  #define MY_PORT 1883 //not-ssl
+  const char my_server[] = "192.168.0.2";
+  #define MY_PORT 10699 //not-ssl
 #endif
 
 #ifdef PRODUCTION
@@ -41,18 +41,15 @@
 const char my_ssid[] = "";
 const char my_pass[] = "";
 
+#define USERNAME_LENGTH 32
+#define PASSWORD_LENGTH 33
 
-char mqtt_username[32];
-char mqtt_password[32];
-
-/* Start and end position in username string to read when setting up the publish topic  */
-#define START_POS 48
-#define END_POS 57
+char mqtt_username[USERNAME_LENGTH];
+char mqtt_password[PASSWORD_LENGTH];
 
 /* these two define the position in EEPROM where the bytes are stored, and the 32 below related to the 32 in the mqtt_username and mqtt_password definitions */
 #define WHARE_USERNAME_POSITION 1
 #define WHARE_PASSWORD_POSITION 33
-#define WHARE_CREDENTIALS_POSITION 0
 
 char mqtt_publish_topic[32];
 /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
@@ -72,7 +69,7 @@ char mqtt_publish_topic[32];
 #define MY_ESP8266_PASSWORD my_pass
 #define MY_CONTROLLER_URL_ADDRESS my_server
 #define MY_MQTT_PUBLISH_TOPIC_PREFIX mqtt_publish_topic
-#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/sensors/wharehauora/"
+#define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "/sensors/v2/"
 
 #define MY_MQTT_USER mqtt_username
 #define MY_MQTT_PASSWORD mqtt_password
@@ -88,7 +85,7 @@ char mqtt_publish_topic[32];
 /* vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
 bool shouldSaveConfig = false;
 bool shouldSendHeartbeat = false;
-int heartBeatFrequency = 10; // seconds
+int heartBeatFrequency = 60; // seconds
 Ticker heartBeat;
 /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
 
@@ -102,11 +99,11 @@ void setSendHeartbeatFlag(){
  * save custom parameters that wifimanager collects to EEPROM
  */
 void saveCustomParameters(){
-  for(int i = 0; i < 32; i++){
+  for(int i = 0; i < USERNAME_LENGTH; i++){
     saveState(i + WHARE_USERNAME_POSITION, mqtt_username[i]);
   }
 
-  for(int i = 0; i < 32; i++){
+  for(int i = 0; i < PASSWORD_LENGTH; i++){
     saveState(i + WHARE_PASSWORD_POSITION, mqtt_password[i]);
   }
 }
@@ -122,11 +119,11 @@ void saveCustomParameters(){
 void loadCustomParameters(){
   Serial.println("loading custom parameters");
 
-  for(int i = 0; i < 32; i++){
+  for(int i = 0; i < USERNAME_LENGTH; i++){
     mqtt_username[i] = loadState(i + WHARE_USERNAME_POSITION);
   }
 
-  for(int i = 0; i < 32; i++){
+  for(int i = 0; i < PASSWORD_LENGTH; i++){
     mqtt_password[i] = loadState(i + WHARE_PASSWORD_POSITION);
   }
 
@@ -159,7 +156,7 @@ void before() {
   Serial.println("Entering config mode");
 
   //  wifiManager.resetSettings();    // reset settings - uncomment this when testing.
-  wifiManager.setTimeout(5* 60);  // wait 30 seconds
+  wifiManager.setTimeout(20);  // wait 20 seconds
 
 
   wifiManager.setAPCallback(configModeCallback);
@@ -172,8 +169,8 @@ void before() {
 
   wifiManager.setWifiSaveMessage("<div>Credentials Saved<br />Trying to connect WhareHauora gateway to your network.<br />If it fails reconnect to AP to try again</div>");
 
-  WiFiManagerParameter whare_mqtt_username("mqtt_username", "username", mqtt_username, 32);
-  WiFiManagerParameter whare_mqtt_password("mqtt_password", "pass code", mqtt_password, 32);
+  WiFiManagerParameter whare_mqtt_username("mqtt_username", "username", mqtt_username, USERNAME_LENGTH);
+  WiFiManagerParameter whare_mqtt_password("mqtt_password", "pass code", mqtt_password, PASSWORD_LENGTH);
 
   wifiManager.addParameter(&whare_mqtt_username);
   wifiManager.addParameter(&whare_mqtt_password);
@@ -207,29 +204,11 @@ void before() {
    */
   loadCustomParameters();
 
-  // pull number out of username, and use it for the mqtt topic.
-
-  while (username_index != NULL && *username_index != '\0') {
-    if((int)*username_index >= START_POS && (int)*username_index <= END_POS ){
-      if(start_of_user_topic == NULL){
-        start_of_user_topic = username_index;
-      }
-    } else {
-      start_of_user_topic = NULL;
-    }
-    ++username_index;
-  }
-
   strcpy(mqtt_publish_topic, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX);
 
-  if(start_of_user_topic != NULL) {
-    Serial.print("mqtt_user_topic is "); Serial.println(start_of_user_topic);
-    strcat(mqtt_publish_topic, start_of_user_topic);
-  } else {
-    Serial.print("no MQTT Topic found\n");
-    /* Set the topic to NA not available */
-    strcat(mqtt_publish_topic, "NA");
-  }
+  Serial.print("mqtt_user_topic is "); Serial.println(mqtt_username);
+  strcat(mqtt_publish_topic, mqtt_username);
+
 }
 
 void setup() {
